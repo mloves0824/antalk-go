@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "io.grpc.examples.apigw";
+option java_outer_classname = "ApigwProto";
+
+import "common/common.proto";
+
+package apigw;
+
+service ApigwService {
+    rpc Login(LoginReq) returns (LoginResp);
+    rpc Logout(LogoutReq) returns (LogoutResp);
+	rpc Subscribe (stream Topic) returns (stream Notification);
+    rpc MsgSend(MsgSendReq) returns (MsgSendResp);
+    rpc MsgPush(MsgPushReq) returns (MsgPushResp);
+};
+
+//登录请求
+message LoginReq {
+    string uid = 1;
+    string token = 2;
+	int64 timestamp = 3;
+}
+
+message LoginResp {
+    string uid = 1;
+    common.ResultType result_code = 2;
+    string result_string = 3;
+}
+
+//登出请求
+message LogoutReq {
+    string uid = 1;
+}
+
+message LogoutResp {
+}
+
+enum TopicType {
+	KICKOUT = 0;
+	MSG = 1;
+	GOURPMSG = 2;
+}
+
+message Topic {
+	string uid = 1;
+	TopicType type = 2;
+}
+
+message Notification {
+	string uid = 1;
+	TopicType type = 2;
+    KickNotify kick = 3;
+	MsgNotify msg = 4;	
+}
+
+
+message MsgNotify {
+	common.MsgInfo msg_info = 1;	
+}
+
+enum KickoutReason {
+    OtherLogin = 0;     //其他地方登录
+}
+
+message KickNotify {
+	string uid = 1;
+	KickoutReason reason = 2;	
+}
+
+message MsgSendReq {
+    common.MsgInfo msg_info = 1;
+}
+
+message MsgSendResp {
+    common.ResultType result = 1;
+}
+
+message MsgPushReq {
+    common.MsgInfo msg_info = 1;
+}
+
+message MsgPushResp {
+    common.ResultType result = 1;
+}
+
+

@@ -8,7 +8,7 @@ import (
 	//	"time"
 
 	"github.com/docopt/docopt-go"
-	pb "github.com/mloves0824/antalk-go/proto"
+	pb "github.com/mloves0824/antalk-go/proto/apigw"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )

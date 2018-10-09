@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "io.grpc.examples.msg";
+option java_outer_classname = "MsgProto";
+
+import "common/common.proto";
+
+package msg;
+
+service MsgService {
+	rpc MsgSend(MsgSendReq) returns(MsgSendResp);
+};
+
+message MsgSendReq {
+	common.MsgInfo msg_info = 1;
+}
+
+message MsgSendResp {
+	common.ResultType result = 1;	
+}
