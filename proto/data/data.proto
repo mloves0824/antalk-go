@@ -9,11 +9,21 @@ import "common/common.proto";
 package data;
 
 service DataService {
+    rpc CheckAuth(CheckAuthReq) returns (CheckAuthResp);
     rpc SetSession(SetSessionReq) returns (SetSessionResp);
     rpc GetSession(GetSessionReq) returns (GetSessionResp);
     rpc SaveMsg(SaveMsgReq) returns (SaveMsgResp);
 };  
 
+message CheckAuthReq {
+	string uid = 1;
+	string token = 2;
+}
+
+message CheckAuthResp {
+	string uid = 1;
+    common.ResultType result = 2;	
+}
 message SetSessionReq {
 	string uid = 1;
 	string server_info = 2;

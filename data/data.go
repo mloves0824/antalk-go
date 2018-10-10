@@ -40,6 +40,9 @@ func newServer() *server {
 	return &server{name: "DataServer", redis_client: client}
 }
 
+func (s *server) CheckAuth(context.Context, *pb.CheckAuthReq) (*pb.CheckAuthResp, error) {
+	return &pb.CheckAuthResp{}, nil
+}
 func (s *server) SetSession(context.Context, *pb.SetSessionReq) (*pb.SetSessionResp, error) {
 	return &pb.SetSessionResp{}, nil
 }

@@ -4,13 +4,12 @@
 package auth
 
 import (
-	fmt "fmt"
-	math "math"
-
-	proto "github.com/golang/protobuf/proto"
 	common "github.com/mloves0824/antalk-go/proto/common"
+	fmt "fmt"
+	proto "github.com/golang/protobuf/proto"
 	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
+	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
