@@ -4,7 +4,7 @@
 package apigw
 
 import (
-	common "common"
+	common "github.com/mloves0824/antalk-go/proto/common"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
 	context "golang.org/x/net/context"
