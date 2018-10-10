@@ -9,23 +9,58 @@ import (
 	"time"
 
 	pb "github.com/mloves0824/antalk-go/proto/apigw"
+	auth_pb "github.com/mloves0824/antalk-go/proto/auth"
+	common_pb "github.com/mloves0824/antalk-go/proto/common"
+	data_pb "github.com/mloves0824/antalk-go/proto/data"
+
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
+const (
+	auth_addr = "localhost:50053"
+	data_addr = "localhost:50052"
+)
+
 type server struct {
-	name    string
-	subStrm map[string]pb.ApigwService_SubscribeServer
+	name        string
+	subStrm     map[string]pb.ApigwService_SubscribeServer
+	auth_client auth_pb.AuthServiceClient
+	data_client data_pb.DataServiceClient
 }
 
 func newServer() *server {
+	// Setup a connection with the authserver
+	auth_conn, err := grpc.Dial(auth_addr, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	new_auth_client := auth_pb.NewAuthServiceClient(auth_conn)
+
+	// Setup a connection with the dataserver
+	data_conn, err := grpc.Dial(data_addr, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	new_data_client := data_pb.NewDataServiceClient(data_conn)
+
 	return &server{name: "ApigwServer",
-		subStrm: make(map[string]pb.ApigwService_SubscribeServer)}
+		subStrm:     make(map[string]pb.ApigwService_SubscribeServer),
+		auth_client: new_auth_client,
+		data_client: new_data_client}
 }
 
 func (s *server) Login(ctx context.Context, req *pb.LoginReq) (*pb.LoginResp, error) {
-	log.Printf("Received a Login Request (%s)", req.GetUid())
+	log.Printf("Received a Login Request uid=(%s),token=(%s)", req.GetUid(), req.GetToken())
+
+	auth_req := &auth_pb.CheckAuthReq{Uid: req.GetUid(), Token: req.GetToken()}
+	auth_resp, err := s.auth_client.CheckAuth(context.Background(), auth_req)
+	if err != nil {
+		return &pb.LoginResp{Uid: req.GetUid(), ResultCode: common_pb.ResultType_ResultErrCheckAuth}, nil
+	}
+	log.Println("CheckAuthReq Resp: ", auth_resp, err)
+
 	value, ok := s.subStrm[req.GetUid()+":KICKOUT"]
 	if ok {
 		log.Printf("Uid %s already Login!", req.GetUid())
@@ -61,6 +96,16 @@ func (s *server) Subscribe(stream pb.ApigwService_SubscribeServer) error {
 		}
 	}
 	return nil
+}
+
+func (s *server) MsgSend(ctx context.Context, req *pb.MsgSendReq) (*pb.MsgSendResp, error) {
+	log.Printf("Received a MsgSend Request (%s)", req.GetMsgInfo().GetMsgId())
+	return &pb.MsgSendResp{}, nil
+}
+
+func (s *server) MsgPush(ctx context.Context, req *pb.MsgPushReq) (*pb.MsgPushResp, error) {
+	log.Printf("Received a MsgPush Request (%s)", req.GetMsgInfo().GetMsgId())
+	return &pb.MsgPushResp{}, nil
 }
 
 func (s *server) pushUpdates() {
