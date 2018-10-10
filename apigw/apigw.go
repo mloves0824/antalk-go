@@ -60,6 +60,9 @@ func (s *server) Login(ctx context.Context, req *pb.LoginReq) (*pb.LoginResp, er
 		return &pb.LoginResp{Uid: req.GetUid(), ResultCode: common_pb.ResultType_ResultErrCheckAuth}, nil
 	}
 	log.Println("CheckAuthReq Resp: ", auth_resp, err)
+	if auth_resp.GetResult() != common_pb.ResultType_ResultOK {
+		return &pb.LoginResp{Uid: req.GetUid(), ResultCode: auth_resp.GetResult()}, nil
+	}
 
 	value, ok := s.subStrm[req.GetUid()+":KICKOUT"]
 	if ok {

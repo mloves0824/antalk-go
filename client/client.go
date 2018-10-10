@@ -14,6 +14,7 @@ import (
 )
 
 var name string
+var token string
 var subChan chan pb.TopicType
 
 const (
@@ -24,7 +25,7 @@ const (
 func login(client pb.ApigwServiceClient) error {
 	//log.Printf("Calling Register RPC")
 
-	resp, err := client.Login(context.Background(), &pb.LoginReq{Uid: name})
+	resp, err := client.Login(context.Background(), &pb.LoginReq{Uid: name, Token: token})
 	if err != nil {
 		log.Fatalf("Login failed %v", err)
 	}
@@ -89,7 +90,7 @@ func main() {
 
 	const usage = `
 Usage:
-	client --uid=uid
+	client --uid=uid --token=token
 `
 	d, err := docopt.Parse(usage, nil, true, "", false)
 	if err != nil {
@@ -99,6 +100,10 @@ Usage:
 	if s, ok := Argument(d, "--uid"); ok {
 		fmt.Printf("uid=%s\n", s)
 		name = s
+	}
+	if t, ok := Argument(d, "--token"); ok {
+		fmt.Printf("token=%s\n", t)
+		token = t
 	}
 	// init important structures
 	subChan = make(chan pb.TopicType, 10)

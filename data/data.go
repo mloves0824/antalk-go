@@ -5,7 +5,7 @@ import (
 	//"io"
 	"log"
 	"net"
-	//	"strings"
+	//"strings"
 	"time"
 
 	redis "github.com/mloves0824/antalk-go/pkg/utils/redis"
@@ -29,10 +29,10 @@ type server struct {
 }
 
 const (
-	key_prefix_token = "TOEKN:"
+	key_prefix_token = "TOKEN:"
 )
 
-var redis_conf redisConf = redisConf{"127.0.0.1:19000", "antalk-auth", 10}
+var redis_conf redisConf = redisConf{"123.206.185.148:19000", "antalk-auth", 3 * time.Second}
 
 func newServer() *server {
 
@@ -45,15 +45,19 @@ func newServer() *server {
 }
 
 func (s *server) CheckAuth(ctx context.Context, req *pb.CheckAuthReq) (*pb.CheckAuthResp, error) {
-	cmd := fmt.Sprintf("GET %s", key_prefix_token+req.GetToken())
-	value, err := s.redis_client.Do(cmd)
+	cmd := fmt.Sprintf("get %s", key_prefix_token+req.GetUid())
+	value, err := s.redis_client.Do("GET", key_prefix_token+req.GetUid())
 	if err != nil {
+		log.Printf("redis_client.Do Err, cmd=%s, err=%v", cmd, err)
 		return &pb.CheckAuthResp{Uid: req.GetUid(), Result: commonpb.ResultType_ResultErrRedis}, nil
 	}
-	if value != nil {
-		return &pb.CheckAuthResp{Uid: req.GetUid(), Result: commonpb.ResultType_ResultErrCheckAuth}, nil
+	log.Printf("redis_client.Do success, cmd=%s, value=%s, GetToken=%s,compare=%b",
+		cmd, value, req.GetToken(), (value == req.GetToken()))
+
+	if value == req.GetToken() {
+		return &pb.CheckAuthResp{Uid: req.GetUid(), Result: commonpb.ResultType_ResultOK}, nil
 	}
-	return &pb.CheckAuthResp{Uid: req.GetUid(), Result: commonpb.ResultType_ResultOK}, nil
+	return &pb.CheckAuthResp{Uid: req.GetUid(), Result: commonpb.ResultType_ResultErrCheckAuth}, nil
 }
 
 func (s *server) SetSession(context.Context, *pb.SetSessionReq) (*pb.SetSessionResp, error) {
