@@ -9,6 +9,7 @@ import (
 	"time"
 
 	redis "github.com/mloves0824/antalk-go/pkg/utils/redis"
+	redigo "github.com/garyburd/redigo/redis"
 	commonpb "github.com/mloves0824/antalk-go/proto/common"
 	pb "github.com/mloves0824/antalk-go/proto/data"
 
@@ -32,7 +33,7 @@ const (
 	key_prefix_token = "TOKEN:"
 )
 
-var redis_conf redisConf = redisConf{"123.206.185.148:19000", "antalk-auth", 3 * time.Second}
+var redis_conf redisConf = redisConf{"127.0.0.1:19000", "antalk-auth", 3 * time.Second}
 
 func newServer() *server {
 
@@ -44,6 +45,14 @@ func newServer() *server {
 	return &server{name: "DataServer", redis_client: client}
 }
 
+func String(rsp interface{}) string {
+	if s, err := redigo.String(rsp, nil); err != nil {
+		panic(err)
+	} else {
+		return s
+	}
+}
+
 func (s *server) CheckAuth(ctx context.Context, req *pb.CheckAuthReq) (*pb.CheckAuthResp, error) {
 	cmd := fmt.Sprintf("get %s", key_prefix_token+req.GetUid())
 	value, err := s.redis_client.Do("GET", key_prefix_token+req.GetUid())
@@ -52,9 +61,9 @@ func (s *server) CheckAuth(ctx context.Context, req *pb.CheckAuthReq) (*pb.Check
 		return &pb.CheckAuthResp{Uid: req.GetUid(), Result: commonpb.ResultType_ResultErrRedis}, nil
 	}
 	log.Printf("redis_client.Do success, cmd=%s, value=%s, GetToken=%s,compare=%b",
-		cmd, value, req.GetToken(), (value == req.GetToken()))
+		cmd, String(value), req.GetToken(), (String(value) == req.GetToken()))
 
-	if value == req.GetToken() {
+	if String(value) == req.GetToken() {
 		return &pb.CheckAuthResp{Uid: req.GetUid(), Result: commonpb.ResultType_ResultOK}, nil
 	}
 	return &pb.CheckAuthResp{Uid: req.GetUid(), Result: commonpb.ResultType_ResultErrCheckAuth}, nil
