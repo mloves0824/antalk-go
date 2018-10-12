@@ -10,6 +10,7 @@ enum ResultType {
     ResultOK               = 0;
 	ResultErrCheckAuth     = 1;
 	ResultErrRedis         = 2;
+	ResultErrInner         = 3;
 }
 
 message MsgInfo {
