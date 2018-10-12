@@ -9,6 +9,8 @@ import (
 
 	"github.com/docopt/docopt-go"
 	pb "github.com/mloves0824/antalk-go/proto/apigw"
+	common_pb "github.com/mloves0824/antalk-go/proto/common"
+
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -86,6 +88,36 @@ func Argument(d map[string]interface{}, name string) (string, bool) {
 	return "", false
 }
 
+func send_msg(client pb.ApigwServiceClient) {
+	var userid string
+	var msg string
+	for {
+		fmt.Println("Enter UserID to Send:")
+		fmt.Scan(&userid)
+		if userid == "" {
+			fmt.Println("Error UserID!")
+			continue
+		}
+		fmt.Println("Enter Msg to Send:")
+		fmt.Scan(&msg)
+		if msg == "" {
+			fmt.Println("Error Msg!")
+			continue
+		}
+
+		var msg_info common_pb.MsgInfo
+		msg_info.SendUid = name
+		msg_info.RecvUid = userid
+		msg_req := &pb.MsgSendReq{MsgInfo: &msg_info}
+		msg_resp, err := client.MsgSend(context.Background(), msg_req)
+		if err != nil {
+			fmt.Println("Send Msg Error!")
+			continue
+		}
+		fmt.Printf("Send Msg Result=%s", msg_resp.GetResult())
+	}
+}
+
 func main() {
 
 	const usage = `
@@ -123,4 +155,6 @@ Usage:
 
 	subscribeTopicKickout(subChan)
 	subscribe(client, subChan)
+
+	go send_msg(client)
 }

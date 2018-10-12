@@ -8,6 +8,7 @@ import (
 	//"strings"
 	//"time"
 
+	//apigw_pb "github.com/mloves0824/antalk-go/proto/apigw"
 	pb "github.com/mloves0824/antalk-go/proto/auth"
 	common_pb "github.com/mloves0824/antalk-go/proto/common"
 	data_pb "github.com/mloves0824/antalk-go/proto/data"
@@ -39,9 +40,26 @@ func (s *server) CheckAuth(ctx context.Context, req *pb.CheckAuthReq) (*pb.Check
 	data_req := &data_pb.CheckAuthReq{Uid: req.GetUid(), Token: req.GetToken()}
 	data_resp, err := s.data_client.CheckAuth(context.Background(), data_req)
 	if err != nil {
-		return &pb.CheckAuthResp{Result: common_pb.ResultType_ResultErrCheckAuth}, nil
+		return &pb.CheckAuthResp{Result: common_pb.ResultType_ResultErrRedis}, nil
 	}
 	log.Printf("send CheckAuthReq success: result=%s", data_resp.GetResult())
+
+	//check kickout
+	getsession_req := &data_pb.GetSessionReq{Uid: req.GetUid()}
+	getsession_resp, err := s.data_client.GetSession(context.Background(), getsession_req)
+	if err != nil {
+		return &pb.CheckAuthResp{Result: common_pb.ResultType_ResultErrRedis}, nil
+	}
+	if getsession_resp.GetServerInfo() != "" {
+		//need kickout
+		_, err := grpc.Dial(getsession_resp.GetServerInfo(), grpc.WithInsecure())
+		if err != nil {
+			log.Fatalf("failed to Dial ApigwSvr: %s %v", getsession_resp.GetServerInfo(), err)
+		}
+		//TODO: proto
+		//apigw_client := apigw_pb.ApigwServiceClient(conn)
+		//apigw_client.MsgPush()
+	}
 	return &pb.CheckAuthResp{Result: data_resp.GetResult()}, nil
 }
 

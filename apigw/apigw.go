@@ -64,13 +64,19 @@ func (s *server) Login(ctx context.Context, req *pb.LoginReq) (*pb.LoginResp, er
 		return &pb.LoginResp{Uid: req.GetUid(), ResultCode: auth_resp.GetResult()}, nil
 	}
 
-	value, ok := s.subStrm[req.GetUid()+":KICKOUT"]
-	if ok {
-		log.Printf("Uid %s already Login!", req.GetUid())
-		if err := value.Send(&pb.Notification{Type: pb.TopicType_KICKOUT, Kick: &pb.KickNotify{Uid: req.GetUid(), Reason: 0}}); err != nil {
-			log.Fatalf("Send failed %v", err)
-		}
-	}
+	//	data_req := &data_pb.GetSessionReq{Uid: req.GetUid()}
+	//	data_resp, err := s.data_client.GetSession(context.Background(), data_req)
+	//	if err != nil {
+	//		return &pb.LoginResp{Uid: req.GetUid(), ResultCode: common_pb.ResultType_ResultErrRedis}, nil
+	//	}
+
+	//	value, ok := s.subStrm[req.GetUid()+":KICKOUT"]
+	//	if ok {
+	//		log.Printf("Uid %s already Login!", req.GetUid())
+	//		if err := value.Send(&pb.Notification{Type: pb.TopicType_KICKOUT, Kick: &pb.KickNotify{Uid: req.GetUid(), Reason: 0}}); err != nil {
+	//			log.Fatalf("Send failed %v", err)
+	//		}
+	//	}
 	return &pb.LoginResp{Uid: req.GetUid(), ResultCode: 0}, nil
 }
 
