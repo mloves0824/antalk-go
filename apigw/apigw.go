@@ -12,6 +12,7 @@ import (
 	auth_pb "github.com/mloves0824/antalk-go/proto/auth"
 	common_pb "github.com/mloves0824/antalk-go/proto/common"
 	data_pb "github.com/mloves0824/antalk-go/proto/data"
+	msg_pb "github.com/mloves0824/antalk-go/proto/msg"
 
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -21,6 +22,7 @@ import (
 const (
 	auth_addr = "localhost:50053"
 	data_addr = "localhost:50052"
+	msg_addr  = "localhost:50054"
 )
 
 type server struct {
@@ -28,27 +30,36 @@ type server struct {
 	subStrm     map[string]pb.ApigwService_SubscribeServer
 	auth_client auth_pb.AuthServiceClient
 	data_client data_pb.DataServiceClient
+	msg_client  msg_pb.MsgServiceClient
 }
 
 func newServer() *server {
 	// Setup a connection with the authserver
 	auth_conn, err := grpc.Dial(auth_addr, grpc.WithInsecure())
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("did not connect auth: %v", err)
 	}
 	new_auth_client := auth_pb.NewAuthServiceClient(auth_conn)
 
 	// Setup a connection with the dataserver
 	data_conn, err := grpc.Dial(data_addr, grpc.WithInsecure())
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("did not connect data: %v", err)
 	}
 	new_data_client := data_pb.NewDataServiceClient(data_conn)
+
+	// Setup a connection with the msgserver
+	msg_conn, err := grpc.Dial(msg_addr, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("did not connect msg: %v", err)
+	}
+	new_msg_client := msg_pb.NewMsgServiceClient(msg_conn)
 
 	return &server{name: "ApigwServer",
 		subStrm:     make(map[string]pb.ApigwService_SubscribeServer),
 		auth_client: new_auth_client,
-		data_client: new_data_client}
+		data_client: new_data_client,
+		msg_client:  new_msg_client}
 }
 
 func (s *server) Login(ctx context.Context, req *pb.LoginReq) (*pb.LoginResp, error) {
@@ -109,7 +120,17 @@ func (s *server) Subscribe(stream pb.ApigwService_SubscribeServer) error {
 
 func (s *server) MsgSend(ctx context.Context, req *pb.MsgSendReq) (*pb.MsgSendResp, error) {
 	log.Printf("Received a MsgSend Request (%s)", req.GetMsgInfo().GetMsgId())
-	return &pb.MsgSendResp{}, nil
+
+	//TODO: check auth locally before sending msg
+
+	msg_req := msg_pb.MsgSendReq{MsgInfo: req.GetMsgInfo()}
+	msg_resp, err := s.msg_client.MsgSend(context.Background(), &msg_req)
+	if err != nil {
+		//TODO: add ResultErrInnel for conn error and other error.
+		return &pb.MsgSendResp{Result: common_pb.ResultType_ResultErrCheckAuth}, nil
+	}
+	log.Printf("Send Msg success, result=%s", msg_resp.GetResult())
+	return &pb.MsgSendResp{Result: msg_resp.GetResult()}, nil
 }
 
 func (s *server) MsgPush(ctx context.Context, req *pb.MsgPushReq) (*pb.MsgPushResp, error) {
