@@ -16,7 +16,7 @@ enum ResultType {
 message MsgInfo {
     string send_uid = 1;
     string recv_uid = 2;
-    int64  msg_id   = 3;
+    uint64  msg_id   = 3;
     string msg_type = 4;
     string msg_body = 5;
     string attachment = 6;
