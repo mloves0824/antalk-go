@@ -5,9 +5,11 @@ import (
 	//"io"
 	"log"
 	"net"
+
 	//"strings"
 	//"time"
 
+	apigw_pb "github.com/mloves0824/antalk-go/proto/apigw"
 	common_pb "github.com/mloves0824/antalk-go/proto/common"
 	data_pb "github.com/mloves0824/antalk-go/proto/data"
 	seq_pb "github.com/mloves0824/antalk-go/proto/seq"
@@ -20,8 +22,9 @@ import (
 )
 
 const (
-	data_addr = "localhost:50052"
-	seq_addr  = "localhost:50055"
+	data_addr  = "localhost:50052"
+	seq_addr   = "localhost:50055"
+	apigw_addr = "localhost:50051"
 )
 
 type server struct {
@@ -46,15 +49,67 @@ func newServer() *server {
 	return &server{name: "MsgServer", data_client: new_data_client, seq_client: new_seq_client}
 }
 
+/*
+1. check param
+2. get seqid from seqsvr
+3. set msg to datasvr
+4. resp to msg sender
+5. notify msg to receiver
+*/
 func (s *server) MsgSend(ctx context.Context, req *pb.MsgSendReq) (*pb.MsgSendResp, error) {
 	seq_req := seq_pb.GetSeqReq{Uid: req.GetMsgInfo().GetRecvUid()}
 	seq_resp, err := s.seq_client.GetSeq(context.Background(), &seq_req)
 	if err != nil {
-		//TODO: return InnerError
-		return &pb.MsgSendResp{Result: common_pb.ResultType_ResultErrCheckAuth}, nil
+		return &pb.MsgSendResp{Result: common_pb.ResultType_ResultErrInner}, nil
 	}
 	log.Printf("Get seq success, seq=%lu", seq_resp.GetSeqId())
-	return &pb.MsgSendResp{}, nil
+
+	msg_info := req.GetMsgInfo()
+	msg_info.MsgId = seq_resp.GetSeqId()
+	data_req := data_pb.SaveMsgReq{MsgInfo: msg_info}
+	data_resp, err := s.data_client.SaveMsg(context.Background(), &data_req)
+	if err != nil {
+		return &pb.MsgSendResp{Result: common_pb.ResultType_ResultErrInner}, nil
+	}
+	log.Printf("Set Msg Rpc success, result=%d", data_resp.GetResult())
+	if data_resp.GetResult() != common_pb.ResultType_ResultOK {
+		return &pb.MsgSendResp{Result: data_resp.GetResult()}, nil
+	}
+
+	go func() {
+		//get session info from datasvr
+		recv_uid := req.GetMsgInfo().GetRecvUid()
+		getsession_req := data_pb.GetSessionReq{Uid: recv_uid}
+		getsession_resp, err := s.data_client.GetSession(context.Background(), &getsession_req)
+		if err != nil {
+			log.Printf("Get session Rpc error, uid=%s", recv_uid)
+			return
+		}
+		recv_serverinfo := getsession_resp.GetServerInfo()
+		log.Println("GetSessionReq Rpc Success, uid=%s, serverinfo=%s", recv_uid, recv_serverinfo)
+		if recv_serverinfo == "" { //TODO: push to apns or jpush?
+			log.Printf("Recv ServerInfo Is Empty, uid=%s", recv_uid)
+			return
+		}
+
+		//TODO: The Apigw Is Not Exist.
+		//push to apigw
+		apigw_conn, err := grpc.Dial(recv_serverinfo, grpc.WithInsecure())
+		if err != nil {
+			log.Printf("Dial Apigw Error, uid=%s, recv_serverinfo=%s", recv_uid, recv_serverinfo)
+			return
+		}
+		msgpush_req := apigw_pb.MsgPushReq{MsgInfo: msg_info}
+		msgpush_resp, err := apigw_pb.NewApigwServiceClient(apigw_conn).MsgPush(context.Background(), &msgpush_req)
+		if err != nil {
+			log.Printf("MsgPushReq RPC Error, uid=%s, recv_serverinfo=%s", recv_uid, recv_serverinfo)
+			return
+		}
+		log.Printf("MsgPushReq RPC Success, uid=%s, recv_serverinfo=%s, result=%d", recv_uid, recv_serverinfo, msgpush_resp.GetResult())
+		//TODO: set msg acked and readed.
+	}()
+
+	return &pb.MsgSendResp{Result: common_pb.ResultType_ResultOK}, nil
 }
 
 func main() {

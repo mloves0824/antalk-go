@@ -2,17 +2,21 @@ package main
 
 import (
 	"fmt"
-	//"io"
+	_ "io"
 	"log"
 	"net"
-	//"strings"
+
+	"database/sql"
+	_ "strings"
 	"time"
 
-	redis "github.com/mloves0824/antalk-go/pkg/utils/redis"
 	redigo "github.com/garyburd/redigo/redis"
+	redis "github.com/mloves0824/antalk-go/pkg/utils/redis"
 	commonpb "github.com/mloves0824/antalk-go/proto/common"
 	pb "github.com/mloves0824/antalk-go/proto/data"
 
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-xorm/xorm"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -27,6 +31,7 @@ type redisConf struct {
 type server struct {
 	name         string
 	redis_client *redis.Client
+	db_client    *sql.DB
 }
 
 const (
@@ -39,10 +44,27 @@ func newServer() *server {
 
 	client, err := redis.NewClientNoAuth(redis_conf.addr, redis_conf.timeout)
 	if err != nil {
-		log.Fatalf("failed to NewClient: %v", err)
+		//log.Fatalf("failed to NewClient: %v", err)
 	}
 
-	return &server{name: "DataServer", redis_client: client}
+	//init mysql
+	new_db_client, err := sql.Open("mysql", "root:123456@tcp(139.199.161.198:3006)/antalk?charset=utf8")
+	if err != nil {
+		log.Fatalf("Failed to Conn to mysql: %v", err)
+	}
+	//	rows, err := db.Query("select * from tx")
+	//	if err != nil {
+	//		log.Fatalf("Failed to Query: %v", err)
+	//	}
+	//	for rows.Next() {
+	//		var id int
+	//		var num int
+	//		err := rows.Scan(&id, &num)
+	//		if err != nil {
+	//			log.Fatalf("Failed to Scan: %v", err)
+	//		}
+	//	}
+	return &server{name: "DataServer", redis_client: client, db_client: new_db_client}
 }
 
 func String(rsp interface{}) string {
@@ -76,8 +98,26 @@ func (s *server) SetSession(context.Context, *pb.SetSessionReq) (*pb.SetSessionR
 func (s *server) GetSession(context.Context, *pb.GetSessionReq) (*pb.GetSessionResp, error) {
 	return &pb.GetSessionResp{}, nil
 }
-func (s *server) SaveMsg(context.Context, *pb.SaveMsgReq) (*pb.SaveMsgResp, error) {
-	return &pb.SaveMsgResp{}, nil
+func (s *server) SaveMsg(ctx context.Context, req *pb.SaveMsgReq) (*pb.SaveMsgResp, error) {
+	stmt, err := s.db_client.Prepare("INSERT INTO Msg SET msgId=?,srcUid=?,dstUid=?,msgBody=?")
+	if err != nil {
+		log.Printf("Prepare error!")
+		return &pb.SaveMsgResp{Result: commonpb.ResultType_ResultErrInner}, nil
+	}
+	result, err := stmt.Exec(req.GetMsgInfo().GetMsgId(), req.GetMsgInfo().GetSendUid(),
+		req.GetMsgInfo().GetRecvUid(), req.GetMsgInfo().GetMsgBody())
+	if err != nil {
+		log.Printf("Exec error!")
+		return &pb.SaveMsgResp{Result: commonpb.ResultType_ResultErrInner}, nil
+	}
+	affect, err := result.RowsAffected()
+	log.Println("Exec Success,affect=%d,err=%v!", affect, err)
+	if affect != 1 {
+		log.Printf("RowsAffected error!")
+		return &pb.SaveMsgResp{Result: commonpb.ResultType_ResultErrInner}, nil
+	}
+
+	return &pb.SaveMsgResp{Result: commonpb.ResultType_ResultOK}, nil
 }
 
 func main() {

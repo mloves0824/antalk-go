@@ -135,6 +135,14 @@ func (s *server) MsgSend(ctx context.Context, req *pb.MsgSendReq) (*pb.MsgSendRe
 
 func (s *server) MsgPush(ctx context.Context, req *pb.MsgPushReq) (*pb.MsgPushResp, error) {
 	log.Printf("Received a MsgPush Request (%s)", req.GetMsgInfo().GetMsgId())
+
+	recv_uid := req.GetMsgInfo().GetRecvUid()
+	value, ok := s.subStrm[recv_uid+":MSG"]
+	if ok {
+		if err := value.Send(&pb.Notification{Type: pb.TopicType_MSG, Msg: &pb.MsgNotify{MsgInfo: req.GetMsgInfo()}}); err != nil {
+			log.Fatalf("Send failed %v", err)
+		}
+	}
 	return &pb.MsgPushResp{}, nil
 }
 
