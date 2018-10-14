@@ -5,6 +5,7 @@ import (
 	//"io"
 	"log"
 	"net"
+
 	//"strings"
 	//"time"
 
@@ -37,30 +38,38 @@ func newServer() *server {
 }
 
 func (s *server) CheckAuth(ctx context.Context, req *pb.CheckAuthReq) (*pb.CheckAuthResp, error) {
+	log.Printf("Receive CheckAuth Req,%v", req)
+
 	data_req := &data_pb.CheckAuthReq{Uid: req.GetUid(), Token: req.GetToken()}
 	data_resp, err := s.data_client.CheckAuth(context.Background(), data_req)
 	if err != nil {
-		return &pb.CheckAuthResp{Result: common_pb.ResultType_ResultErrRedis}, nil
+		log.Printf("CheckAuth RPC Error, err=%v", err)
+		return &pb.CheckAuthResp{Result: common_pb.ResultType_ResultErrInner}, nil
 	}
-	log.Printf("send CheckAuthReq success: result=%s", data_resp.GetResult())
+	if data_resp.GetResult() != common_pb.ResultType_ResultOK {
+		log.Printf("CheckAuth Login Error, result=%v", data_resp.GetResult())
+		return &pb.CheckAuthResp{Result: data_resp.GetResult()}, nil
+	}
 
 	//check kickout
 	getsession_req := &data_pb.GetSessionReq{Uid: req.GetUid()}
 	getsession_resp, err := s.data_client.GetSession(context.Background(), getsession_req)
 	if err != nil {
-		return &pb.CheckAuthResp{Result: common_pb.ResultType_ResultErrRedis}, nil
+		log.Printf("GetSession RPC Error, err=%v", err)
+		return &pb.CheckAuthResp{Result: common_pb.ResultType_ResultErrInner}, nil
 	}
 	if getsession_resp.GetServerInfo() != "" {
 		//need kickout
-		_, err := grpc.Dial(getsession_resp.GetServerInfo(), grpc.WithInsecure())
-		if err != nil {
-			log.Fatalf("failed to Dial ApigwSvr: %s %v", getsession_resp.GetServerInfo(), err)
-		}
+		//		_, err := grpc.Dial(getsession_resp.GetServerInfo(), grpc.WithInsecure())
+		//		if err != nil {
+		//			log.Fatalf("failed to Dial ApigwSvr: %s %v", getsession_resp.GetServerInfo(), err)
+		//		}
 		//TODO: proto
 		//apigw_client := apigw_pb.ApigwServiceClient(conn)
 		//apigw_client.MsgPush()
 	}
-	return &pb.CheckAuthResp{Result: data_resp.GetResult()}, nil
+
+	return &pb.CheckAuthResp{Result: common_pb.ResultType_ResultOK}, nil
 }
 
 func main() {

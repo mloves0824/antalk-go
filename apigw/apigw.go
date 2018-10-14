@@ -62,33 +62,43 @@ func newServer() *server {
 		msg_client:  new_msg_client}
 }
 
+/*
+	1.check param
+	2.check auth from authsvr
+	3.set session to datasvr
+	4.resp to client
+*/
 func (s *server) Login(ctx context.Context, req *pb.LoginReq) (*pb.LoginResp, error) {
 	log.Printf("Received a Login Request uid=(%s),token=(%s)", req.GetUid(), req.GetToken())
+
+	if req.GetUid() == "" || req.GetToken() == "" {
+		log.Printf("Param Error!")
+		return &pb.LoginResp{Uid: req.GetUid(), ResultCode: common_pb.ResultType_ResultErrInner}, nil
+	}
 
 	auth_req := &auth_pb.CheckAuthReq{Uid: req.GetUid(), Token: req.GetToken()}
 	auth_resp, err := s.auth_client.CheckAuth(context.Background(), auth_req)
 	if err != nil {
-		return &pb.LoginResp{Uid: req.GetUid(), ResultCode: common_pb.ResultType_ResultErrCheckAuth}, nil
+		log.Printf("CheckAuth RPC Error, err=%v", err)
+		return &pb.LoginResp{Uid: req.GetUid(), ResultCode: common_pb.ResultType_ResultErrInner}, nil
 	}
-	log.Println("CheckAuthReq Resp: ", auth_resp, err)
 	if auth_resp.GetResult() != common_pb.ResultType_ResultOK {
+		log.Printf("CheckAuth Logic Error, result=%v", auth_resp.GetResult())
 		return &pb.LoginResp{Uid: req.GetUid(), ResultCode: auth_resp.GetResult()}, nil
 	}
 
-	//	data_req := &data_pb.GetSessionReq{Uid: req.GetUid()}
-	//	data_resp, err := s.data_client.GetSession(context.Background(), data_req)
-	//	if err != nil {
-	//		return &pb.LoginResp{Uid: req.GetUid(), ResultCode: common_pb.ResultType_ResultErrRedis}, nil
-	//	}
+	setsession_req := data_pb.SetSessionReq{Uid: req.GetUid(), ServerInfo: "localhost:50051"}
+	setsession_resp, err := s.data_client.SetSession(context.Background(), &setsession_req)
+	if err != nil {
+		log.Printf("SetSessionReq RPC Error, err=%v", err)
+		return &pb.LoginResp{Uid: req.GetUid(), ResultCode: common_pb.ResultType_ResultErrInner}, nil
+	}
+	if setsession_resp.GetResult() != common_pb.ResultType_ResultOK {
+		log.Printf("SetSessionReq Logic Error, result=%v", setsession_resp.GetResult())
+		return &pb.LoginResp{Uid: req.GetUid(), ResultCode: setsession_resp.GetResult()}, nil
+	}
 
-	//	value, ok := s.subStrm[req.GetUid()+":KICKOUT"]
-	//	if ok {
-	//		log.Printf("Uid %s already Login!", req.GetUid())
-	//		if err := value.Send(&pb.Notification{Type: pb.TopicType_KICKOUT, Kick: &pb.KickNotify{Uid: req.GetUid(), Reason: 0}}); err != nil {
-	//			log.Fatalf("Send failed %v", err)
-	//		}
-	//	}
-	return &pb.LoginResp{Uid: req.GetUid(), ResultCode: 0}, nil
+	return &pb.LoginResp{Uid: req.GetUid(), ResultCode: common_pb.ResultType_ResultOK}, nil
 }
 
 func (s *server) Logout(ctx context.Context, req *pb.LogoutReq) (*pb.LogoutResp, error) {
