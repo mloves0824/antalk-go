@@ -11,7 +11,8 @@ enum ResultType {
 	ResultErrCheckAuth     = 1;
 	ResultErrRedis         = 2;
 	ResultErrInner         = 3;
-	ResultErrSaveMsg         = 4;
+	ResultErrSaveMsg       = 4;
+	ResultErrParam         = 5;
 }
 
 message MsgInfo {
