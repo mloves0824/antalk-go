@@ -146,6 +146,11 @@ func (s *server) MsgPush(ctx context.Context, req *pb.MsgPushReq) (*pb.MsgPushRe
 	return &pb.MsgPushResp{}, nil
 }
 
+
+func (s *server) KickoutPush(ctx context.Context, req *pb.KickoutPushReq) (*pb.KickoutPushResp, error) {
+	return &pb.KickoutPushResp{}, nil
+}
+
 func (s *server) pushUpdates() {
 	var str string
 	//var i uint32

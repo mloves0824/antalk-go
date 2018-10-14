@@ -14,6 +14,7 @@ service ApigwService {
 	rpc Subscribe (stream Topic) returns (stream Notification);
     rpc MsgSend(MsgSendReq) returns (MsgSendResp);
     rpc MsgPush(MsgPushReq) returns (MsgPushResp);
+    rpc KickoutPush(KickoutPushReq) returns (KickoutPushResp);
 };
 
 //登录请求
@@ -85,4 +86,10 @@ message MsgPushResp {
     common.ResultType result = 1;
 }
 
+message KickoutPushReq {
+	KickNotify kickinfo = 1;	
+}
 
+message KickoutPushResp {
+	common.ResultType result = 1;
+}
