@@ -32,7 +32,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Listen Error, err=%v", err)
 	}
-	log.Println("Seq Server Start, Listen addr=%s", listen_addr)
+	log.Printf("Seq Server Start, Listen addr=%s", listen_addr)
 
 	s := grpc.NewServer()
 	svr := newServer()

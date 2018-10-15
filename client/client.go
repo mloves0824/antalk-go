@@ -5,7 +5,7 @@ import (
 	"io"
 	"log"
 	//	"math/rand"
-	//	"time"
+	"time"
 
 	"github.com/docopt/docopt-go"
 	pb "github.com/mloves0824/antalk-go/proto/apigw"
@@ -119,8 +119,25 @@ func send_msg(client pb.ApigwServiceClient) {
 			fmt.Println("Send Msg Error!")
 			continue
 		}
-		fmt.Printf("Send Msg Result=%s", msg_resp.GetResult())
+		fmt.Printf("Send Msg Result=%s\n", msg_resp.GetResult())
 	}
+}
+
+func checkHealth(client pb.ApigwServiceClient) bool {
+	for {
+		time.Sleep(time.Second * 5)
+		health_req := pb.HealthCheckReq{Uid: name}
+		health_resp, err := client.HealthCheck(context.Background(), &health_req)
+		if err != nil {
+			log.Printf("HealthCheck RPC Error,%v", err)
+			continue
+		}
+		if health_resp.GetStatus() != pb.HealthCheckResp_SERVING {
+			log.Printf("HealthCheck Logic Error,%d", health_resp.GetStatus())
+			continue
+		}
+	}
+	return true
 }
 
 func main() {
@@ -161,6 +178,7 @@ Usage:
 	subscribeTopicKickout(subChan)
 	subscribeTopicMsg(subChan)
 	go subscribe(client, subChan)
+	go checkHealth(client)
 
 	send_msg(client)
 }

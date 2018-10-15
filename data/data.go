@@ -35,7 +35,8 @@ type server struct {
 }
 
 const (
-	key_prefix_token = "TOKEN:"
+	key_prefix_token   = "TOKEN:"
+	key_prefix_session = "SESSION:"
 )
 
 var redis_conf redisConf = redisConf{"127.0.0.1:19000", "antalk-auth", 3 * time.Second}
@@ -91,12 +92,25 @@ func (s *server) CheckAuth(ctx context.Context, req *pb.CheckAuthReq) (*pb.Check
 	return &pb.CheckAuthResp{Uid: req.GetUid(), Result: commonpb.ResultType_ResultErrCheckAuth}, nil
 }
 
-func (s *server) SetSession(context.Context, *pb.SetSessionReq) (*pb.SetSessionResp, error) {
-	return &pb.SetSessionResp{}, nil
+func (s *server) SetSession(ctx context.Context, req *pb.SetSessionReq) (*pb.SetSessionResp, error) {
+	cmd := fmt.Sprintf("SET %s %s EX %d", key_prefix_session+req.GetUid(), req.GetServerInfo(), 5)
+	_, err := s.redis_client.Do("SET %s %s EX %d", key_prefix_session+req.GetUid(), req.GetServerInfo(), 5)
+	if err != nil {
+		log.Printf("redis_client.Do Err, cmd=%s, err=%v", cmd, err)
+		return &pb.SetSessionResp{Uid: req.GetUid(), Result: commonpb.ResultType_ResultErrInner}, nil
+	}
+
+	return &pb.SetSessionResp{Uid: req.GetUid(), Result: commonpb.ResultType_ResultOK}, nil
 }
 
-func (s *server) GetSession(context.Context, *pb.GetSessionReq) (*pb.GetSessionResp, error) {
-	return &pb.GetSessionResp{}, nil
+func (s *server) GetSession(ctx context.Context, req *pb.GetSessionReq) (*pb.GetSessionResp, error) {
+	cmd := fmt.Sprintf("GET %s", key_prefix_session+req.GetUid())
+	serverinfo, err := s.redis_client.Do("GET %s", key_prefix_session+req.GetUid())
+	if err != nil {
+		log.Printf("redis_client.Do Err, cmd=%s, err=%v", cmd, err)
+		return &pb.GetSessionResp{Uid: req.GetUid()}, nil
+	}
+	return &pb.GetSessionResp{Uid: req.GetUid(), ServerInfo: String(serverinfo)}, nil
 }
 func (s *server) SaveMsg(ctx context.Context, req *pb.SaveMsgReq) (*pb.SaveMsgResp, error) {
 	stmt, err := s.db_client.Prepare("INSERT INTO Msg SET msgId=?,srcUid=?,dstUid=?,msgBody=?")

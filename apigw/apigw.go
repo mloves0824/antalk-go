@@ -160,6 +160,22 @@ func (s *server) KickoutPush(ctx context.Context, req *pb.KickoutPushReq) (*pb.K
 	return &pb.KickoutPushResp{}, nil
 }
 
+func (s *server) HealthCheck(ctx context.Context, req *pb.HealthCheckReq) (*pb.HealthCheckResp, error) {
+
+	setsession_req := data_pb.SetSessionReq{Uid: req.GetUid(), ServerInfo: "localhost:50051"}
+	setsession_resp, err := s.data_client.SetSession(context.Background(), &setsession_req)
+	if err != nil {
+		log.Printf("SetSessionReq RPC Error, err=%v", err)
+		return &pb.HealthCheckResp{Status: pb.HealthCheckResp_NOT_SERVING}, nil
+	}
+	if setsession_resp.GetResult() != common_pb.ResultType_ResultOK {
+		log.Printf("SetSessionReq Logic Error, result=%v", setsession_resp.GetResult())
+		return &pb.HealthCheckResp{Status: pb.HealthCheckResp_NOT_SERVING}, nil
+	}
+
+	return &pb.HealthCheckResp{Status: pb.HealthCheckResp_SERVING}, nil
+}
+
 func (s *server) pushUpdates() {
 	var str string
 	//var i uint32
@@ -183,7 +199,7 @@ func (s *server) pushUpdates() {
 }
 
 func main() {
-	fmt.Printf("Server Start!")
+	fmt.Println("Server Start!")
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
