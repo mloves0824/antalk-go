@@ -57,22 +57,30 @@ func newServer() *server {
 5. notify msg to receiver
 */
 func (s *server) MsgSend(ctx context.Context, req *pb.MsgSendReq) (*pb.MsgSendResp, error) {
+	log.Printf("Recv MsgSend Request, %v", req.GetMsgInfo())
+
 	seq_req := seq_pb.GetSeqReq{Uid: req.GetMsgInfo().GetRecvUid()}
 	seq_resp, err := s.seq_client.GetSeq(context.Background(), &seq_req)
 	if err != nil {
+		log.Printf("GetSeqReq Rpc Error, %v", err)
 		return &pb.MsgSendResp{Result: common_pb.ResultType_ResultErrInner}, nil
 	}
-	log.Printf("Get seq success, seq=%lu", seq_resp.GetSeqId())
+	if seq_resp.GetSeqId() <= 0 {
+		log.Printf("GetSeqReq Logic Error, seqid=%d", seq_resp.GetSeqId())
+		return &pb.MsgSendResp{Result: common_pb.ResultType_ResultErrInner}, nil
+	}
+	log.Printf("GetSeqReq Logic Success, seqid=%lu", seq_resp.GetSeqId())
 
 	msg_info := req.GetMsgInfo()
 	msg_info.MsgId = seq_resp.GetSeqId()
 	data_req := data_pb.SaveMsgReq{MsgInfo: msg_info}
 	data_resp, err := s.data_client.SaveMsg(context.Background(), &data_req)
 	if err != nil {
+		log.Printf("SaveMsgReq Rpc Error, %v", err)
 		return &pb.MsgSendResp{Result: common_pb.ResultType_ResultErrInner}, nil
 	}
-	log.Printf("Set Msg Rpc success, result=%d", data_resp.GetResult())
 	if data_resp.GetResult() != common_pb.ResultType_ResultOK {
+		log.Printf("SaveMsgReq Logic Error, result=%d", data_resp.GetResult())
 		return &pb.MsgSendResp{Result: data_resp.GetResult()}, nil
 	}
 

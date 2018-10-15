@@ -20,26 +20,31 @@ var token string
 var subChan chan pb.TopicType
 
 const (
-	address = "localhost:50051"
+	address = "123.206.185.148:50051"
 )
 
 // Login ...
-func login(client pb.ApigwServiceClient) error {
-	//log.Printf("Calling Register RPC")
-
+func login(client pb.ApigwServiceClient) bool {
 	resp, err := client.Login(context.Background(), &pb.LoginReq{Uid: name, Token: token})
 	if err != nil {
-		log.Fatalf("Login failed %v", err)
+		log.Fatalf("Login Rpc failed %v", err)
+		return false
 	}
-	log.Println("Login Resp: ", resp, err)
+	if resp.GetResultCode() != common_pb.ResultType_ResultOK {
+		log.Fatalf("Login Rpc logic %d", resp.GetResultCode())
+		return false
+	}
 
-	return nil
+	log.Println("Login Success!")
+	return true
 }
 
-// subscribeToModeChanges ...
 func subscribeTopicKickout(c chan pb.TopicType) {
-	log.Println("Subscribing to Kickout")
 	c <- pb.TopicType_KICKOUT
+}
+
+func subscribeTopicMsg(c chan pb.TopicType) {
+	c <- pb.TopicType_MSG
 }
 
 // recvNotification ...
@@ -66,7 +71,7 @@ func subscribe(client pb.ApigwServiceClient, c chan pb.TopicType) {
 	go recvNotification(stream)
 
 	for t := range c {
-		//log.Printf("sending subscibe for topic %s", t.String())
+		log.Printf("Sending subscibe for topic %s", t.String())
 		if err := stream.Send(&pb.Topic{Uid: name, Type: t}); err != nil {
 			log.Fatalf("couldnt send %s", t.String())
 		}
@@ -154,7 +159,8 @@ Usage:
 	login(client)
 
 	subscribeTopicKickout(subChan)
-	subscribe(client, subChan)
+	subscribeTopicMsg(subChan)
+	go subscribe(client, subChan)
 
-	go send_msg(client)
+	send_msg(client)
 }

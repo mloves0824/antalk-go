@@ -129,17 +129,17 @@ func (s *server) Subscribe(stream pb.ApigwService_SubscribeServer) error {
 }
 
 func (s *server) MsgSend(ctx context.Context, req *pb.MsgSendReq) (*pb.MsgSendResp, error) {
-	log.Printf("Received a MsgSend Request (%s)", req.GetMsgInfo().GetMsgId())
+	log.Printf("Received a MsgSend Request (%v)", req.GetMsgInfo())
 
 	//TODO: check auth locally before sending msg
 
 	msg_req := msg_pb.MsgSendReq{MsgInfo: req.GetMsgInfo()}
 	msg_resp, err := s.msg_client.MsgSend(context.Background(), &msg_req)
 	if err != nil {
-		//TODO: add ResultErrInnel for conn error and other error.
-		return &pb.MsgSendResp{Result: common_pb.ResultType_ResultErrCheckAuth}, nil
+		log.Printf("MsgSend Rpc Error, %v", err)
+		return &pb.MsgSendResp{Result: common_pb.ResultType_ResultErrInner}, nil
 	}
-	log.Printf("Send Msg success, result=%s", msg_resp.GetResult())
+	log.Printf("MsgSend Rpc Success, result=%s", msg_resp.GetResult())
 	return &pb.MsgSendResp{Result: msg_resp.GetResult()}, nil
 }
 
@@ -155,7 +155,6 @@ func (s *server) MsgPush(ctx context.Context, req *pb.MsgPushReq) (*pb.MsgPushRe
 	}
 	return &pb.MsgPushResp{}, nil
 }
-
 
 func (s *server) KickoutPush(ctx context.Context, req *pb.KickoutPushReq) (*pb.KickoutPushResp, error) {
 	return &pb.KickoutPushResp{}, nil
