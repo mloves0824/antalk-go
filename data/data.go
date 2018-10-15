@@ -110,8 +110,7 @@ func (s *server) GetSession(ctx context.Context, req *pb.GetSessionReq) (*pb.Get
 		log.Printf("redis_client.Do Err, cmd=%s, err=%v", cmd, err)
 		return &pb.GetSessionResp{Uid: req.GetUid()}, nil
 	}
-	if serverinfo == "" {
-		log.Printf("redis_client.Do Err, cmd=%s, err=%v", cmd, err)
+	if serverinfo == nil {
 		return &pb.GetSessionResp{Uid: req.GetUid()}, nil
 	}
 	return &pb.GetSessionResp{Uid: req.GetUid(), ServerInfo: String(serverinfo)}, nil
