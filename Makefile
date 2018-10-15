@@ -1,6 +1,6 @@
-.PHONY:all apigw data client auth msg
+.PHONY:all apigw data client auth msg seq
  
-all: apigw data client auth msg
+all: apigw data client auth msg seq
 
 apigw: 
 	go build -i -o bin/apigw ./apigw
@@ -16,6 +16,9 @@ client:
 
 msg: 
 	go build -i -o bin/msg ./msg
+
+seq: 
+	go build -i -o bin/seq ./cmd/seq
 
 clean: 
 	@rm -rf bin

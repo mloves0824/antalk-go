@@ -15,6 +15,7 @@ service ApigwService {
     rpc MsgSend(MsgSendReq) returns (MsgSendResp);
     rpc MsgPush(MsgPushReq) returns (MsgPushResp);
     rpc KickoutPush(KickoutPushReq) returns (KickoutPushResp);
+	rpc HealthCheck(HealthCheckReq) returns (HealthCheckResp);
 };
 
 //登录请求
@@ -93,3 +94,17 @@ message KickoutPushReq {
 message KickoutPushResp {
 	common.ResultType result = 1;
 }
+
+message HealthCheckReq {
+  string service = 1;
+}
+
+message HealthCheckResp {
+  enum ServingStatus {
+    UNKNOWN = 0;
+    SERVING = 1;
+    NOT_SERVING = 2;
+  }
+  ServingStatus status = 1;
+}
+
