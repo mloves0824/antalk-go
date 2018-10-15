@@ -96,7 +96,7 @@ message KickoutPushResp {
 }
 
 message HealthCheckReq {
-  string service = 1;
+  string uid = 1;
 }
 
 message HealthCheckResp {
