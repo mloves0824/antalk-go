@@ -94,7 +94,7 @@ func (s *server) CheckAuth(ctx context.Context, req *pb.CheckAuthReq) (*pb.Check
 
 func (s *server) SetSession(ctx context.Context, req *pb.SetSessionReq) (*pb.SetSessionResp, error) {
 	cmd := fmt.Sprintf("SET %s %s EX %d", key_prefix_session+req.GetUid(), req.GetServerInfo(), 5)
-	_, err := s.redis_client.Do("SET %s %s EX %d", key_prefix_session+req.GetUid(), req.GetServerInfo(), 5)
+	_, err := s.redis_client.Do("SET", key_prefix_session+req.GetUid(), req.GetServerInfo(), "EX", 5)
 	if err != nil {
 		log.Printf("redis_client.Do Err, cmd=%s, err=%v", cmd, err)
 		return &pb.SetSessionResp{Uid: req.GetUid(), Result: commonpb.ResultType_ResultErrInner}, nil
@@ -105,7 +105,7 @@ func (s *server) SetSession(ctx context.Context, req *pb.SetSessionReq) (*pb.Set
 
 func (s *server) GetSession(ctx context.Context, req *pb.GetSessionReq) (*pb.GetSessionResp, error) {
 	cmd := fmt.Sprintf("GET %s", key_prefix_session+req.GetUid())
-	serverinfo, err := s.redis_client.Do("GET %s", key_prefix_session+req.GetUid())
+	serverinfo, err := s.redis_client.Do("GET", key_prefix_session+req.GetUid())
 	if err != nil {
 		log.Printf("redis_client.Do Err, cmd=%s, err=%v", cmd, err)
 		return &pb.GetSessionResp{Uid: req.GetUid()}, nil
