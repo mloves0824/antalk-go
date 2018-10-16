@@ -14,6 +14,7 @@ import (
 	data_pb "github.com/mloves0824/antalk-go/proto/data"
 	msg_pb "github.com/mloves0824/antalk-go/proto/msg"
 
+	"github.com/mloves0824/antalk-go/pkg/utils/go_qconf"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -200,6 +201,11 @@ func (s *server) pushUpdates() {
 
 func main() {
 	fmt.Println("Server Start!")
+
+	listen_addr, err := go_qconf.GetConf("/dev/apigw/listen_addr", "test")
+	if err != nil {
+		log.Fatalf("failed to GetConf: %v", err)
+	}
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
