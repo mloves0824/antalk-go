@@ -202,12 +202,17 @@ func (s *server) pushUpdates() {
 func main() {
 	fmt.Println("Server Start!")
 
-	listen_addr, err := go_qconf.GetConf("/dev/apigw/listen_addr", "test")
-	log.Printf("get '/dev/apigw/listen_addr' success, %s", listen_addr)
+	listen_addr, err := go_qconf.GetConf("/antalk/apigw/listen_addr", "test")
+	log.Printf("get '/antalk/apigw/listen_addr' success, %s", listen_addr)
 	if err != nil {
 		log.Fatalf("failed to GetConf: %v", err)
 	}
-	lis, err := net.Listen("tcp", listen_addr)
+	listen_type, err := go_qconf.GetConf("/antalk/apigw/listen_type", "test")
+	log.Printf("get '/antalk/apigw/listen_type' success, %s", listen_type)
+	if err != nil {
+		log.Fatalf("failed to GetConf: %v", err)
+	}
+	lis, err := net.Listen(listen_type, listen_addr)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
