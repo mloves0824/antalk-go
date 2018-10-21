@@ -203,10 +203,11 @@ func main() {
 	fmt.Println("Server Start!")
 
 	listen_addr, err := go_qconf.GetConf("/dev/apigw/listen_addr", "test")
+	log.Printf("get '/dev/apigw/listen_addr' success, %s", listen_addr)
 	if err != nil {
 		log.Fatalf("failed to GetConf: %v", err)
 	}
-	lis, err := net.Listen("tcp", ":50051")
+	lis, err := net.Listen("tcp", listen_addr)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
