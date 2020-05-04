@@ -2,3 +2,4 @@
 ./log
 *.exe
 git_cmd.sh
+.idea
