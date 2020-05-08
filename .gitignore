@@ -3,3 +3,4 @@
 *.exe
 git_cmd.sh
 .idea
+bin
