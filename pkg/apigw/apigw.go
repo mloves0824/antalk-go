@@ -10,22 +10,22 @@ type Apigw struct {
 }
 
 func NewApigw(config *Config) (*Apigw, error) {
-	apigw := &Apigw{}
-	apigw.config = config
+	s := &Apigw{}
+	s.config = config
 
-	if err := apigw.setup(); err != nil {
+	if err := s.setup(); err != nil {
 		return nil, err
 	}
 
-	if err := apigw.register(); err != nil {
+	if err := s.register(); err != nil {
 		return nil, err
 	}
 
-	if err := apigw.serve(); err != nil {
+	if err := s.serve(); err != nil {
 		return nil, err
 	}
 
-	return apigw, nil
+	return s, nil
 }
 
 func (s *Apigw) setup() error {
