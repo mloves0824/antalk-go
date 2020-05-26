@@ -1,7 +1,7 @@
 package main
 
 import (
-	"antalk-go/pkg/apigw"
+	"antalk-go/internal/apigw"
 	"log"
 )
 

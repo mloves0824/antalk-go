@@ -1,0 +1,33 @@
+// protoc --gogofaster_out=. antalk.proto
+syntax = "proto3";
+package proto;
+
+enum CmdType {
+  CMD_RESERVE = 0;  //未知请求
+  CMD_LOGIN = 1;    //登录请求
+  CMD_REGISTER = 2; //注册请求
+}
+
+enum DataType {
+  DT_PB = 0;    //默认为protobuf
+  DT_JSON = 1;  //json
+}
+
+message CmdInput {
+    CmdType cmd_type = 1; //消息类型
+    int64 req_id = 2;     //请求ID
+    DataType data_type = 3;  //数据类型，如protobuf、msgpack、json等
+    bytes data = 4;       //数据
+}
+
+message CmdOutput {
+    CmdType cmd_type = 1; //消息类型
+    int64 req_id = 2;     //请求ID
+    bool status = 3;       //请求状态
+    int32 error_code = 4;  //错误码
+    string error_message = 5; //错误信息
+    DataType data_type = 6;      //数据类型
+    bytes data = 7;
+}
+
+
