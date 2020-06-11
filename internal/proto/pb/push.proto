@@ -1,0 +1,14 @@
+// protoc --gogofaster_out=. push.proto
+syntax = "proto3";
+package proto;
+
+message MsgNotifyReq {
+  string msg_id = 1;
+  string sender_uid = 2;
+  string receive_uid = 3;
+  string subject = 4;
+}
+
+message MsgNotifyResp {
+  int64 msg_id = 1;
+}

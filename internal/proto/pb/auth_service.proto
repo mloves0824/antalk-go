@@ -1,16 +1,14 @@
-// protoc --gogofaster_out=. auth_service.proto
+// protoc --gogofaster_out=. auto_service.proto
 syntax = "proto3";
-
 package proto;
 
-message AuthReq {
-  string uid = 1;
-  int32 method = 2;
-  string token = 3;
+message LoginReq {
+    int32 user_id = 1;
+    string user_name = 2;
+    string phone_id = 3;
+    string password = 4;
 }
 
-message AuthResp {
-  int32 status = 1;
-  int32 err_code = 2;
-  string err_msg = 3;
+message LoginResp {
+    string user_id = 1;
 }

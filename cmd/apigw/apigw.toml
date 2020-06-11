@@ -1,0 +1,9 @@
+[rpcServer]
+    addr = "0.0.0.0:18000"
+    proto = "tcp"
+[auth]
+    discoveryType = "multiple"
+    servers = "tcp@localhost:18001"
+    failMode = 2
+    selectMode = 1
+    SerializeType = 1

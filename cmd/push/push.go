@@ -2,13 +2,13 @@ package main
 
 import (
 	"antalk-go/internal/common"
-	"antalk-go/internal/msg/controller/rpcx"
+	"antalk-go/internal/push/controller/rpcx"
 	"flag"
 	"log"
 )
 
 var (
-	configName = flag.String("config_name", "msg", "config name")
+	configName = flag.String("config_name", "push", "config name")
 	configType = flag.String("config_type", "toml", "config type")
 	configPath = flag.String("config_path", ".", "config path")
 )

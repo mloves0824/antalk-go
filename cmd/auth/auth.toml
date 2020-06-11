@@ -1,0 +1,7 @@
+[rpcServer]
+    addr = "0.0.0.0:18001"
+    proto = "tcp"
+
+[mysql]
+    driverName = "mysql"
+    dataSourceName = "root:123@tcp(localhost:3006)/antalk"

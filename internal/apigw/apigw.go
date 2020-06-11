@@ -1,27 +1,30 @@
 package apigw
 
-import "github.com/smallnest/rpcx/v5/server"
+import (
+	"antalk-go/internal/common"
+	"github.com/smallnest/rpcx/v5/server"
+)
 
 type Apigw struct {
 	online bool
-	config *Config
+	config *common.Config
 
 	server *server.Server
 }
 
-func NewApigw(config *Config) (*Apigw, error) {
+func NewApigw(c *common.Config) (*Apigw, error) {
 	s := &Apigw{}
-	s.config = config
+	s.config = c
 
 	if err := s.setup(); err != nil {
 		return nil, err
 	}
 
-	if err := s.register(); err != nil {
+	if err := s.register(c); err != nil {
 		return nil, err
 	}
 
-	if err := s.serve(); err != nil {
+	if err := s.serve(c); err != nil {
 		return nil, err
 	}
 
@@ -33,14 +36,16 @@ func (s *Apigw) setup() error {
 	return nil
 }
 
-func (s *Apigw) register() error {
-	s.server.Register(new(AuthService), "")
+func (s *Apigw) register(c *common.Config) error {
+	svc := &CmdService{}
+	svc.Init(c)
+	s.server.Register(svc, "")
 
 	return nil
 }
 
-func (s *Apigw) serve() error {
-	s.server.Serve("tcp", ":11111")
+func (s *Apigw) serve(c *common.Config) error {
+	s.server.Serve(c.GetString("rpcServer.proto"), c.GetString("rpcServer.addr"))
 	return nil
 }
 
