@@ -160,7 +160,7 @@ type SeqServiceServer interface {
 	GetSeq(context.Context, *GetSeqReq) (*GetSeqResp, error)
 }
 
-func RegisterSeqServiceServer(s *grpc.Server, srv SeqServiceServer) {
+func RegisterSeqServiceServer() {
 	s.RegisterService(&_SeqService_serviceDesc, srv)
 }
 

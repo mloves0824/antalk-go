@@ -1,0 +1,18 @@
+// protoc --gogofaster_out=. auth.proto
+syntax = "proto3";
+import "cmd.proto";
+package proto;
+
+message LoginReq {
+    int32 user_id = 1;
+    string user_name = 2;
+    string phone_id = 3;
+    string password = 4;
+    string session_id = 5;
+    string version = 6;
+    PlatForm platform = 7;    //终端类型
+}
+
+message LoginResp {
+    string user_id = 1;
+}

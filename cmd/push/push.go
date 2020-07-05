@@ -2,7 +2,7 @@ package main
 
 import (
 	"antalk-go/internal/common"
-	"antalk-go/internal/push/controller/rpcx"
+	"antalk-go/internal/push/controller"
 	"flag"
 	"log"
 )
@@ -22,8 +22,8 @@ func main() {
 	}
 	c.Init()
 
-	_, err := rpcx.New(c)
+	_, err := controller.New(c)
 	if err != nil {
-		log.Fatal("rpcx.New error, ", err)
+		log.Fatal("controller.New error, ", err)
 	}
 }

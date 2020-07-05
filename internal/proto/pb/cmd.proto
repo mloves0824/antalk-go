@@ -1,0 +1,59 @@
+// protoc --gogofaster_out=. cmd.proto
+syntax = "proto3";
+package proto;
+
+enum CmdType {
+  //登录相关
+  CMD_RESERVE = 0;  //未知请求
+  CMD_LOGIN = 1;    //登录请求
+  CMD_REGISTER = 2; //注册请求
+
+  //消息相关
+  CMD_MSG = 100; //消息请求
+  CMD_MSG_NOTIFY = 101;
+}
+
+enum DataType {
+  DT_PB = 0;    //默认为protobuf
+  DT_JSON = 1;  //json
+}
+
+enum ErrorCode {
+  ERROR_NONE = 0;
+  ERROR_PARAM = -1;
+  ERROR_PASSWORD = -2;
+  ERROR_INTERNAL = -3;
+}
+
+enum PlatForm {
+  PLATFORM_WINDOWS = 0;
+  PLATFORM_MAC = 1;
+  PLATFORM_LINUX = 2;
+  PLATFORM_IOS = 3;
+  PLATFORM_ANDROID = 4;
+  PLATFORM_WEB = 5;
+}
+
+message CmdMeta {
+  CmdType cmd_type = 1; //消息类型
+  int64 req_id = 2;     //请求ID
+  bool status = 3;       //请求状态
+  ErrorCode error_code = 4;  //错误码
+  string error_message = 5; //错误信息
+  DataType data_type = 6;      //数据类型
+}
+
+message CmdReq {
+  CmdMeta meta = 1;
+  bytes data = 2;
+}
+
+message CmdResp {
+  CmdMeta meta = 1;
+  bytes data = 2;
+}
+
+message CmdNotify {
+  CmdMeta meta = 1;
+  bytes data = 7;
+}

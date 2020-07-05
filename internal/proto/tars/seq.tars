@@ -1,0 +1,7 @@
+module SeqServer
+{
+    interface Seq
+    {
+        unsigned int get();
+    };
+};

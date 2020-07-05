@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option go_package = "github.com/mloves0824/antalk-go/internal/proto/grpc";
+option java_multiple_files = true;
+option java_package = "io.grpc.examples.apigw";
+option java_outer_classname = "ApigwProto";
+
+package seq;
+
+service SeqService {
+    rpc GetSeq(GetSeqReq) returns (GetSeqResp);
+};
+
+//获取请求
+message GetSeqReq {
+    string uid = 1;
+}
+
+message GetSeqResp {
+	uint64 seq_id = 1;
+}

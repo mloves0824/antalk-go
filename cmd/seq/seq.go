@@ -1,44 +1,51 @@
 package main
 
 import (
+	"antalk-go/internal/common"
+	"antalk-go/internal/seq/protocol/http"
+	"flag"
 	"log"
-	"net"
-	"time"
-
-	pb "github.com/mloves0824/antalk-go/proto/seq"
-	context "golang.org/x/net/context"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
-const (
-	listen_addr = "localhost:50055"
+var (
+	configName = flag.String("config_name", "seq", "config name")
+	configType = flag.String("config_type", "toml", "config type")
+	configPath = flag.String("config_path", ".", "config path")
 )
 
 type server struct {
 	name string
 }
 
-func newServer() *server {
-	return &server{"SeqServer"}
-}
-
-func (s *server) GetSeq(ctx context.Context, req *pb.GetSeqReq) (resp *pb.GetSeqResp, err error) {
-	return &pb.GetSeqResp{SeqId: uint64(time.Now().Unix())}, nil
-}
-
 func main() {
-	listener, err := net.Listen("tcp", listen_addr)
-	if err != nil {
-		log.Fatalf("Listen Error, err=%v", err)
-	}
-	log.Printf("Seq Server Start, Listen addr=%s", listen_addr)
+	flag.Parse()
 
-	s := grpc.NewServer()
-	svr := newServer()
-	pb.RegisterSeqServiceServer(s, svr)
-	reflection.Register(s)
-	if err := s.Serve(listener); err != nil {
-		log.Fatalf("Serve Error, err=%v")
+	c := &common.Config{
+		Name: *configName,
+		Type: *configType,
+		Path: *configPath,
+	}
+	c.Init()
+
+	httpSrv := http.New(c)
+
+	// signal
+	sg := make(chan os.Signal, 1)
+	signal.Notify(sg, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
+	for {
+		s := <-sg
+		log.Printf("seq server get a signal %s\n", s.String())
+		switch s {
+		case syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT:
+
+			httpSrv.Close()
+			return
+		case syscall.SIGHUP:
+		default:
+			return
+		}
 	}
 }
